@@ -1,12 +1,14 @@
 import "modern-normalize";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
+import { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
-import TanStackProvider from "@/components/TanStackProvider/TanStackProvider";
-import Header from "@/components/Header/Header";
-import Footer from "@/components/Footer/Footer";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { ReactNode } from "react";
+import TanStackProvider from "../components/TanStackProvider/TanStackProvider";
+import Header from "../components/Header/Header";
+import Footer from "../components/Footer/Footer";
+import AuthProvider from "../components/AuthProvider/AuthProvider";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -18,11 +20,11 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Note Hub",
   description:
-    "Note Hub is your personal assistant for quickly creating notes.",
+    "Keep your ideas safe and simple with Note Hub — a clean, fast, and reliable personal notebook without the clutter.",
   openGraph: {
     title: "Note Hub",
     description:
-      "Note Hub is your personal assistant for quickly creating notes.",
+      "Note Hub is a clean and minimal personal notebook for capturing your thoughts and ideas. Fast, reliable, and distraction-free — your space to think clearly.",
     url: "https://08-zustand-orcin-six.vercel.app",
     images: [
       { url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg" },
@@ -41,13 +43,16 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${roboto.variable}`}>
         <TanStackProvider>
-          <Header />
+          <AuthProvider>
+            <Header />
 
-          {children}
-          {modal}
+            {children}
+            {modal}
 
-          <Footer />
-          <ReactQueryDevtools initialIsOpen={false} />
+            <Footer />
+            <Toaster />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </AuthProvider>
         </TanStackProvider>
       </body>
     </html>

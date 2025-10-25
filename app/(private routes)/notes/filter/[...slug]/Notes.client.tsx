@@ -1,15 +1,16 @@
 "use client";
 
-import ErrorMessage from "@/components/ErrorMessage/ErrorMessage";
-import NoteList from "@/components/NoteList/NoteList";
-import Pagination from "@/components/Pagination/Pagination";
-import SearchBox from "@/components/SearchBox/SearchBox";
-import { fetchNotes } from "@/lib/api";
+import ErrorMessage from "../../../../../components/ErrorMessage/ErrorMessage";
+import NoteList from "../../../../../components/NoteList/NoteList";
+import Pagination from "../../../../../components/Pagination/Pagination";
+import SearchBox from "../../../../../components/SearchBox/SearchBox";
+import { fetchNotes } from "../../../../../lib/api/clientApi";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import css from "./NotesPage.module.css";
-import { useRouter } from "next/navigation";
+
+import Link from "next/link";
 
 interface NotesClientProps {
   category?: string;
@@ -18,7 +19,6 @@ interface NotesClientProps {
 export default function NotesClient({ category }: NotesClientProps) {
   const [topic, setTopic] = useState("");
   const [page, setPage] = useState(1);
-  const router = useRouter();
 
   const { data, isError, isSuccess } = useQuery({
     queryKey: ["notes", topic, page, category],
@@ -28,10 +28,6 @@ export default function NotesClient({ category }: NotesClientProps) {
   });
 
   const totalPages = data?.totalPages ?? 0;
-
-  function onClickCreated() {
-    router.push("/notes/action/create");
-  }
 
   const updateSearchWord = useDebouncedCallback((searchWord: string) => {
     setTopic(searchWord);
@@ -49,9 +45,9 @@ export default function NotesClient({ category }: NotesClientProps) {
             updatePage={setPage}
           />
         )}
-        <button className={css.button} onClick={onClickCreated}>
+        <Link href={"/notes/action/create"} className={css.button}>
           Create note +
-        </button>
+        </Link>
       </header>
       {isError && (
         <ErrorMessage text="There was an error, please try again..." />
