@@ -12,9 +12,12 @@ export default function SignUp() {
   const [error, setError] = useState("");
   const setUser = useAuthStore((state) => state.setUser);
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     try {
-      const formValues = Object.fromEntries(formData) as UserRequest;
+      const formValues = Object.fromEntries(
+        new FormData(e.currentTarget)
+      ) as unknown as UserRequest;
       const res = await register(formValues);
       if (res) {
         setUser(res);
@@ -33,36 +36,22 @@ export default function SignUp() {
   return (
     <main className={css.mainContent}>
       <h1 className={css.formTitle}>Sign up</h1>
-      <form action={handleSubmit} className={css.form}>
+      <form onSubmit={handleSubmit} className={css.form}>
         <div className={css.formGroup}>
           <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            name="email"
-            className={css.input}
-            required
-          />
+          <input id="email" type="email" name="email" required />
         </div>
 
         <div className={css.formGroup}>
           <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            className={css.input}
-            required
-          />
+          <input id="password" type="password" name="password" required />
         </div>
 
-        <div className={css.actions}>
-          <button type="submit" className={css.submitButton}>
-            Register
-          </button>
-        </div>
+        <button type="submit" className={css.submitButton}>
+          Register
+        </button>
 
-        {error && <p className={css.error}>{error}</p>}
+        {error && <div className={css.error}>{error}</div>}
       </form>
     </main>
   );
