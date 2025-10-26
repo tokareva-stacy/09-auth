@@ -1,6 +1,5 @@
 import { User } from "../../types/user";
 import type { Note, NoteFormData } from "../../types/note";
-import { nextServer } from "./api";
 
 export interface ResponseAPI {
   notes: Note[];
@@ -32,68 +31,123 @@ export interface UpdateUserRequest {
   username: string;
 }
 
+const API_PREFIX = "/api";
+
+/**
+ * Helper to handle fetch responses and throw an Error-like object
+ * that contains `response.data` so callers that expect Axios-like
+ * error shape can still access `.response.data`.
+ */
+async function handleResponse<T>(res: Response): Promise<T> {
+  const payload = await res.json().catch(() => ({}));
+  if (res.ok) return payload as T;
+
+  const err: any = new Error(payload?.error ?? `HTTP ${res.status}`);
+  // Provide a similar shape to AxiosError so existing error handling keeps working
+  err.response = { data: payload };
+  err.status = res.status;
+  throw err;
+}
+
 export async function fetchNotes(
   searchWord: string,
   page: number,
   tag?: string
 ) {
-  if (tag === "All") {
-    tag = undefined;
-  }
+  if (tag === "All") tag = undefined;
 
-  const options: OptionsAPI = {
-    params: {
-      search: searchWord,
-      tag: tag,
-      page: page,
-      perPage: 12,
-    },
-  };
+  const params = new URLSearchParams();
+  params.set("search", searchWord ?? "");
+  if (tag) params.set("tag", tag);
+  params.set("page", String(page ?? 1));
+  params.set("perPage", "12");
 
-  const res = await nextServer.get<ResponseAPI>("/notes", options);
-  return res.data;
+  const res = await fetch(`${API_PREFIX}/notes?${params.toString()}`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  return handleResponse<ResponseAPI>(res);
 }
 
 export async function fetchNoteById(id: string) {
-  const res = await nextServer.get<Note>(`/notes/${id}`);
-  return res.data;
+  const res = await fetch(`${API_PREFIX}/notes/${encodeURIComponent(id)}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  return handleResponse<Note>(res);
 }
 
 export async function createNote(data: NoteFormData) {
-  const res = await nextServer.post<Note>("/notes", data);
-  return res.data;
+  // If NoteFormData contains files, this should be FormData and content type omitted.
+  // Assuming it's JSON here (adjust if your create note uses multipart/form-data).
+  const res = await fetch(`${API_PREFIX}/notes`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<Note>(res);
 }
 
 export async function deleteNote(id: string) {
-  const res = await nextServer.delete<Note>(`/notes/${id}`);
-  return res.data;
+  const res = await fetch(`${API_PREFIX}/notes/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  return handleResponse<Note>(res);
 }
 
 export async function register(data: UserRequest) {
-  const res = await nextServer.post<User>("/auth/register", data);
-  return res.data;
+  const res = await fetch(`${API_PREFIX}/auth/register`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<User>(res);
 }
 
 export async function login(data: UserRequest) {
-  const res = await nextServer.post<User>("/auth/login", data);
-  return res.data;
+  const res = await fetch(`${API_PREFIX}/auth/login`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<User>(res);
 }
 
 export async function logout(): Promise<void> {
-  await nextServer.post("/auth/logout");
+  const res = await fetch(`${API_PREFIX}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  await handleResponse(res);
 }
 
-export const checkSession = async () => {
-  const res = await nextServer.get<CheckSessionRequest>("/auth/session");
-  return res.data.success;
+export const checkSession = async (): Promise<CheckSessionRequest> => {
+  const res = await fetch(`${API_PREFIX}/auth/session`, {
+    method: "GET",
+    credentials: "include",
+  });
+  return handleResponse<CheckSessionRequest>(res);
 };
 
-export async function getMe() {
-  const res = await nextServer.get<User>("/users/me");
-  return res.data;
+export async function getMe(): Promise<User> {
+  const res = await fetch(`${API_PREFIX}/users/me`, {
+    method: "GET",
+    credentials: "include",
+  });
+  return handleResponse<User>(res);
 }
 
-export async function updateMe(payload: UpdateUserRequest) {
-  const res = await nextServer.patch<User>("/users/me", payload);
-  return res.data;
+export async function updateMe(data: UpdateUserRequest): Promise<User> {
+  const res = await fetch(`${API_PREFIX}/users/me`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<User>(res);
 }
